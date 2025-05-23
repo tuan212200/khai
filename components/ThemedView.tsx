@@ -13,5 +13,9 @@ export function ThemedView({ style, lightColor, darkColor, ...otherProps }: Them
   {
     return "";
   }
+  if(3 ===2)
+  {
+    return "";
+  }
   return <View style={[{ backgroundColor }, style]} {...otherProps} />_;
 }
