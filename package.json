@@ -2,13 +2,23 @@
   "name": "reviewcode",
   "main": "expo-router/entry",
   "version": "1.0.0",
+  "type": "module",
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test": "jest",
+    "test:e2e": "detox test",
+    "test:e2e:ios": "detox test --configuration ios.sim.debug",
+    "test:e2e:android": "detox test --configuration android.emu.debug",
+    "build:e2e:ios": "detox build --configuration ios.sim.debug",
+    "build:e2e:android": "detox build --configuration android.emu.debug",
+    "e2e:setup": "detox clean-framework-cache && detox build",
+    "test:e2e:debug": "detox test --configuration ios.sim.debug --loglevel verbose",
+    "test:unit": "jest --testPathIgnorePatterns=e2e"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
@@ -40,10 +50,22 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react-native": "^13.2.0",
     "@types/react": "~19.0.10",
-    "typescript": "~5.8.3",
+    "babel-jest": "^29.7.0",
+    "babel-preset-expo": "^13.1.11",
+    "chai": "^5.2.0",
+    "detox": "^20.39.0",
     "eslint": "^9.25.0",
-    "eslint-config-expo": "~9.2.0"
+    "eslint-config-expo": "~9.2.0",
+    "eslint-plugin-testing-library": "^7.2.1",
+    "identity-obj-proxy": "^3.0.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-expo": "^53.0.5",
+    "mocha": "^11.5.0",
+    "react-test-renderer": "^19.0.0",
+    "typescript": "~5.8.3"
   },
   "private": true
 }
