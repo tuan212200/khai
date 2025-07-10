@@ -1,25 +1,19 @@
 /** @type {Detox.DetoxConfig} */
-module.exports = {
+export default {
   testRunner: {
     args: {
       '$0': 'jest',
-      config: 'e2e/jest.config.js'
+      config: 'e2e/jest.config.cjs'
     },
     jest: {
-      setupTimeout: 120000
+      setupFilesAfterEnv: ['<rootDir>/e2e/jest.setup.js']
     }
   },
   apps: {
-    'expo.ios': {
+    'ios.debug': {
       type: 'ios.app',
       binaryPath: 'ios/build/Build/Products/Debug-iphonesimulator/reviewcode.app',
-      build: 'npx expo run:ios --configuration Debug --device-id simulator'
-    },
-    'expo.android': {
-      type: 'android.apk',
-      binaryPath: 'android/app/build/outputs/apk/debug/app-debug.apk',
-      build: 'npx expo run:android --variant debug',
-      reversePorts: [8081]
+      build: 'npx expo run:ios --configuration Debug --scheme reviewcode --device simulator'
     }
   },
   devices: {
@@ -28,22 +22,12 @@ module.exports = {
       device: {
         type: 'iPhone 15'
       }
-    },
-    emulator: {
-      type: 'android.emulator',
-      device: {
-        avdName: 'Pixel_3a_API_30_x86'
-      }
     }
   },
   configurations: {
     'ios.sim.debug': {
       device: 'simulator',
-      app: 'expo.ios'
-    },
-    'android.emu.debug': {
-      device: 'emulator',
-      app: 'expo.android'
+      app: 'ios.debug'
     }
   }
 };

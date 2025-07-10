@@ -36,6 +36,33 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="tasks"
+        options={{
+          title: 'Tasks',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="checkmark.circle.fill" color={color} />,
+          tabBarAccessibilityLabel: 'Tasks Tab',
+          tabBarButton: (props) => <HapticTab {...props} testID="tab-tasks" />,
+        }}
+      />
+      <Tabs.Screen
+        name="weather"
+        options={{
+          title: 'Weather',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="cloud.sun.fill" color={color} />,
+          tabBarAccessibilityLabel: 'Weather Tab',
+          tabBarButton: (props) => <HapticTab {...props} testID="tab-weather" />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          tabBarAccessibilityLabel: 'Profile Tab',
+          tabBarButton: (props) => <HapticTab {...props} testID="tab-profile" />,
+        }}
+      />
+      <Tabs.Screen
         name="explore"
         options={{
           title: 'Explore',

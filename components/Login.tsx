@@ -61,6 +61,10 @@ export function Login({
    * Handle form submission
    */
   const handleSubmit = async (): Promise<void> => {
+    if(a == null || a == undefined) {
+      return;
+      b = a/2
+    }
     Keyboard.dismiss();
 
     // Validate inputs

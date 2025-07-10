@@ -8,16 +8,22 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText';
+import { IconSymbol } from './ui/IconSymbol';
 import { useThemeColor } from '@/hooks/useThemeColor';
 
 interface TaskItem {
   id: string;
   title: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high';
+  category: string;
+  dueDate?: Date;
   completed: boolean;
-  createdAt: number;
+  createdAt: Date;
 }
 
 interface TaskManagerProps {
@@ -48,7 +54,12 @@ export function TaskManager({
   // State
   const [tasks, setTasks] = useState<TaskItem[]>(initialTasks);
   const [taskTitle, setTaskTitle] = useState<string>('');
+  const [taskDescription, setTaskDescription] = useState<string>('');
+  const [taskPriority, setTaskPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [taskCategory, setTaskCategory] = useState<string>('Personal');
+  const [taskDueDate, setTaskDueDate] = useState<Date | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isAddModalVisible, setIsAddModalVisible] = useState<boolean>(false);
   
   // Combined loading state
   const loading = isLoading || isSubmitting;
@@ -87,18 +98,28 @@ export function TaskManager({
       const newTask: TaskItem = {
         id: Date.now().toString(),
         title: taskTitle.trim(),
+        description: taskDescription.trim(),
+        priority: taskPriority,
+        category: taskCategory,
+        dueDate: taskDueDate,
         completed: false,
-        createdAt: Date.now(),
+        createdAt: new Date(),
       };
       
       const updatedTasks = [newTask, ...tasks];
       setTasks(updatedTasks);
       setTaskTitle('');
+      setTaskDescription('');
+      setTaskPriority('medium');
+      setTaskCategory('Personal');
+      setTaskDueDate(undefined);
       
       // Notify parent component if callback exists
       if (onTasksUpdate) {
         onTasksUpdate(updatedTasks);
       }
+
+      Alert.alert('Success', 'Task added successfully!');
     } catch (error) {
       Alert.alert(
         'Error', 
@@ -106,8 +127,9 @@ export function TaskManager({
       );
     } finally {
       setIsSubmitting(false);
+      setIsAddModalVisible(false);
     }
-  }, [taskTitle, tasks, onTasksUpdate]);
+  }, [taskTitle, taskDescription, taskPriority, taskCategory, taskDueDate, tasks, onTasksUpdate]);
 
   /**
    * Toggle task completion status
@@ -167,6 +189,40 @@ export function TaskManager({
       ],
     );
   }, [tasks, onTasksUpdate]);
+
+  /**
+   * Get color for priority badge
+   */
+  const getPriorityColor = (priority: string) => {
+    const p = priorities.find(p => p.value === priority);
+    return p?.color || '#666';
+  };
+
+  /**
+   * Format due date for display
+   */
+  const formatDueDate = (date?: Date) => {
+    if (!date) return null;
+    const today = new Date();
+    const diffTime = date.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) return 'Overdue';
+    if (diffDays === 0) return 'Due today';
+    if (diffDays === 1) return 'Due tomorrow';
+    return `Due in ${diffDays} days`;
+  };
+
+  const incompleteTasks = tasks.filter(task => !task.completed);
+  const completedTasks = tasks.filter(task => task.completed);
+
+  // Categories and priorities for demo purposes
+  const categories = ['Personal', 'Work', 'Shopping', 'Health', 'Learning'];
+  const priorities = [
+    { value: 'low' as const, label: 'Low', color: '#4CAF50' },
+    { value: 'medium' as const, label: 'Medium', color: '#FF9800' },
+    { value: 'high' as const, label: 'High', color: '#F44336' },
+  ];
 
   /**
    * Render individual task item
@@ -270,7 +326,7 @@ export function TaskManager({
               { backgroundColor: primaryColor },
               loading && styles.disabledButton
             ]}
-            onPress={() => void addTask()}
+            onPress={() => setIsAddModalVisible(true)}
             disabled={loading}
             accessibilityLabel="Add task button"
             accessibilityHint="Tap to add the new task to your list"
@@ -310,6 +366,125 @@ export function TaskManager({
             </ThemedText>
           </ThemedView>
         )}
+
+        {/* Add Task Modal */}
+        <Modal
+          visible={isAddModalVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          testID="task-manager-modal"
+        >
+          <ThemedView style={[styles.modalContainer, { backgroundColor }]}>
+            <ThemedView style={styles.modalHeader}>
+              <ThemedText type="subtitle">Add New Task</ThemedText>
+              <TouchableOpacity
+                onPress={() => setIsAddModalVisible(false)}
+                testID="task-manager-modal-close"
+                accessibilityLabel="Close modal"
+              >
+                <IconSymbol size={24} name="xmark.circle.fill" color="#666" />
+              </TouchableOpacity>
+            </ThemedView>
+
+            <ThemedView style={styles.form}>
+              <ThemedView style={styles.inputGroup}>
+                <ThemedText style={styles.label}>Title *</ThemedText>
+                <TextInput
+                  style={[styles.input, { color: textColor, backgroundColor: backgroundColor }]}
+                  value={taskTitle}
+                  onChangeText={setTaskTitle}
+                  placeholder="Enter task title"
+                  testID="task-manager-title-input"
+                  accessibilityLabel="Task title input"
+                />
+              </ThemedView>
+
+              <ThemedView style={styles.inputGroup}>
+                <ThemedText style={styles.label}>Description</ThemedText>
+                <TextInput
+                  style={[styles.input, styles.textArea, { color: textColor, backgroundColor: backgroundColor }]}
+                  value={taskDescription}
+                  onChangeText={setTaskDescription}
+                  placeholder="Enter task description"
+                  multiline
+                  numberOfLines={3}
+                  testID="task-manager-description-input"
+                  accessibilityLabel="Task description input"
+                />
+              </ThemedView>
+
+              <ThemedView style={styles.inputGroup}>
+                <ThemedText style={styles.label}>Priority</ThemedText>
+                <ThemedView style={styles.priorityOptions}>
+                  {priorities.map((priority) => (
+                    <TouchableOpacity
+                      key={priority.value}
+                      style={[
+                        styles.priorityOption,
+                        taskPriority === priority.value && styles.selectedPriority,
+                        { borderColor: priority.color }
+                      ]}
+                      onPress={() => setTaskPriority(priority.value)}
+                      testID={`task-manager-priority-${priority.value}`}
+                      accessibilityLabel={`Set priority to ${priority.label}`}
+                    >
+                      <ThemedText style={[
+                        styles.priorityOptionText,
+                        taskPriority === priority.value && { color: priority.color }
+                      ]}>
+                        {priority.label}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ))}
+                </ThemedView>
+              </ThemedView>
+
+              <ThemedView style={styles.inputGroup}>
+                <ThemedText style={styles.label}>Category</ThemedText>
+                <ThemedView style={styles.categoryOptions}>
+                  {categories.map((category) => (
+                    <TouchableOpacity
+                      key={category}
+                      style={[
+                        styles.categoryOption,
+                        taskCategory === category && styles.selectedCategory
+                      ]}
+                      onPress={() => setTaskCategory(category)}
+                      testID={`task-manager-category-${category.toLowerCase()}`}
+                      accessibilityLabel={`Set category to ${category}`}
+                    >
+                      <ThemedText style={[
+                        styles.categoryOptionText,
+                        taskCategory === category && styles.selectedCategoryText
+                      ]}>
+                        {category}
+                      </ThemedText>
+                    </TouchableOpacity>
+                  ))}
+                </ThemedView>
+              </ThemedView>
+
+              <ThemedView style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.cancelButton]}
+                  onPress={() => setIsAddModalVisible(false)}
+                  testID="task-manager-cancel-button"
+                  accessibilityLabel="Cancel task creation"
+                >
+                  <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.saveButton]}
+                  onPress={addTask}
+                  testID="task-manager-save-button"
+                  accessibilityLabel="Save new task"
+                >
+                  <ThemedText style={styles.saveButtonText}>Add Task</ThemedText>
+                </TouchableOpacity>
+              </ThemedView>
+            </ThemedView>
+          </ThemedView>
+        </Modal>
       </ThemedView>
     </KeyboardAvoidingView>
   );
@@ -322,6 +497,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    gap: 16,
   },
   headerTitle: {
     fontSize: 24,
@@ -342,12 +518,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   addButton: {
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 10,
-    borderRadius: 25,
+    gap: 6,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(76, 175, 80, 0.1)',
   },
   disabledButton: {
     opacity: 0.7,
@@ -362,13 +538,14 @@ const styles = StyleSheet.create({
   },
   taskItem: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
+    alignItems: 'flex-start',
+    padding: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
     borderRadius: 8,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
+    gap: 12,
+  },
+  completedTask: {
+    opacity: 0.6,
   },
   checkbox: {
     width: 24,
@@ -386,21 +563,46 @@ const styles = StyleSheet.create({
   taskTitle: {
     flex: 1,
     fontSize: 16,
+    fontWeight: '500',
     marginLeft: 10,
   },
   completedTaskTitle: {
     textDecorationLine: 'line-through',
+  },
+  taskDescription: {
+    fontSize: 14,
     opacity: 0.7,
   },
-  deleteButton: {
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
+  taskMeta: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
   },
-  deleteText: {
-    fontSize: 16,
+  priorityBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  priorityText: {
+    fontSize: 10,
     fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  categoryText: {
+    fontSize: 12,
+    opacity: 0.6,
+  },
+  dueDateText: {
+    fontSize: 12,
+    opacity: 0.6,
+  },
+  overdue: {
+    color: '#F44336',
+    fontWeight: '600',
+  },
+  deleteButton: {
+    padding: 4,
   },
   emptyList: {
     flex: 1,
@@ -412,4 +614,98 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     textAlign: 'center',
   },
+  modalContainer: {
+    flex: 1,
+    padding: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  form: {
+    gap: 20,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  priorityOptions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  priorityOption: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    alignItems: 'center',
+  },
+  selectedPriority: {
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  priorityOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  categoryOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  categoryOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  selectedCategory: {
+    backgroundColor: '#4CAF50',
+  },
+  categoryOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  selectedCategoryText: {
+    color: '#ffffff',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 24,
+  },
+  actionButton: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    backgroundColor: '#f5f5f5',
+  },
+  saveButton: {
+    backgroundColor: '#4CAF50',
+  },
+  cancelButtonText: {
+    color: '#666',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  saveButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
+
+// Also export as named export for flexibility
+export default TaskManager;
+export { TaskManager };
