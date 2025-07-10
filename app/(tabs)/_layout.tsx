@@ -22,9 +22,17 @@ export default function TabLayout() {
           ios: {
             // Use a transparent background on iOS to show the blur effect
             position: 'absolute',
+            height: 88, // Ensure sufficient height for touch targets
+            paddingBottom: 34, // Safe area padding
           },
-          default: {},
+          default: {
+            height: 64, // Standard height for Android
+          },
         }),
+        tabBarItemStyle: {
+          paddingVertical: 4,
+          minHeight: 48, // Ensure minimum touch target
+        },
       }}>
       <Tabs.Screen
         name="index"

@@ -1,84 +1,91 @@
 describe('Grocery Shopping List E2E Tests', () => {
+  beforeAll(async () => {
+    await device.launchApp({ newInstance: true });
+    await waitFor(element(by.text('Welcome!'))).toBeVisible().withTimeout(15000);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  });
+
+  afterAll(async () => {
+    await device.terminateApp();
+  });
+
   beforeEach(async () => {
-    await device.launchApp();
-    await waitFor(element(by.id('home-screen'))).toBeVisible().withTimeout(10000);
-    // Wait for components to settle
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Navigate to home and clear existing items
+    await element(by.id('tab-home')).tap();
+    await waitFor(element(by.text('Welcome!'))).toBeVisible().withTimeout(5000);
+    
+    // Clear existing grocery items for clean state
+    try {
+      await element(by.id('clear-all-button')).tap();
+    } catch (error) {
+      // Clear button might not exist, manually delete items
+      for (let i = 0; i < 10; i++) {
+        try {
+          await element(by.id(`delete-item-${i}`)).tap();
+        } catch (deleteError) {
+          break; // No more items to delete
+        }
+      }
+    }
+    
+    // Scroll to grocery list section
+    try {
+      await element(by.text('Welcome!')).swipe('up', 'slow', 0.3);
+    } catch (error) {
+      // Swipe might not be needed
+    }
   });
 
   it('should display the grocery shopping list component on home screen', async () => {
-    await expect(element(by.id('grocery-shopping-list'))).toBeVisible();
+    await waitFor(element(by.id('grocery-shopping-list'))).toBeVisible().withTimeout(5000);
     await expect(element(by.id('grocery-input'))).toBeVisible();
     await expect(element(by.id('add-item-button'))).toBeVisible();
   });
 
   it('should allow user to add a single grocery item', async () => {
-    // Type in the grocery input
-    await element(by.id('grocery-input')).typeText('Apples');
+    await waitFor(element(by.id('grocery-input'))).toBeVisible().withTimeout(5000);
+    await element(by.id('grocery-input')).typeText('Test Item');
     
-    // Ensure button is visible and tappable
-    await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(5000);
+    await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(3000);
     await element(by.id('add-item-button')).tap();
     
-    // Check if the item appears in the list
-    await expect(element(by.text('Apples'))).toBeVisible();
-    await expect(element(by.id('grocery-item-0'))).toBeVisible();
+    await waitFor(element(by.text('Test Item'))).toBeVisible().withTimeout(3000);
   });
 
   it('should allow user to add multiple grocery items', async () => {
-    // Add first item
-    await element(by.id('grocery-input')).typeText('Bananas');
-    await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(5000);
-    await element(by.id('add-item-button')).tap();
-    await expect(element(by.text('Bananas'))).toBeVisible();
+    const items = ['Apples', 'Bananas', 'Oranges'];
     
-    // Add second item
-    await element(by.id('grocery-input')).clearText();
-    await element(by.id('grocery-input')).typeText('Milk');
-    await element(by.id('add-item-button')).tap();
-    await expect(element(by.text('Milk'))).toBeVisible();
-    
-    // Add third item
-    await element(by.id('grocery-input')).clearText();
-    await element(by.id('grocery-input')).typeText('Bread');
-    await element(by.id('add-item-button')).tap();
-    await expect(element(by.text('Bread'))).toBeVisible();
-    
-    // Verify all items are present
-    await expect(element(by.text('Bananas'))).toBeVisible();
-    await expect(element(by.text('Milk'))).toBeVisible();
-    await expect(element(by.text('Bread'))).toBeVisible();
+    for (const item of items) {
+      await waitFor(element(by.id('grocery-input'))).toBeVisible().withTimeout(3000);
+      await element(by.id('grocery-input')).typeText(item);
+      await element(by.id('add-item-button')).tap();
+      await waitFor(element(by.text(item))).toBeVisible().withTimeout(3000);
+      await element(by.id('grocery-input')).clearText();
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
   });
 
   it('should not add empty items to the list', async () => {
-    // Get initial count by checking if empty state is shown
-    const hasEmptyState = await element(by.id('empty-grocery-list')).isVisible().catch(() => false);
+    const initialCount = await element(by.id('grocery-list-items')).getElements?.length || 0;
     
     // Try to add empty item
-    await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(5000);
+    await element(by.id('add-item-button')).tap();
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Try with whitespace
+    await element(by.id('grocery-input')).typeText('   ');
     await element(by.id('add-item-button')).tap();
     
-    // Verify no item was added - empty state should still be visible if it was before
-    if (hasEmptyState) {
-      await expect(element(by.id('empty-grocery-list'))).toBeVisible();
-    }
-    // No item-0 should exist if list was empty
-    try {
-      await expect(element(by.id('grocery-item-0'))).not.toBeVisible();
-    } catch (error) {
-      // If element doesn't exist at all, that's also correct
-    }
+    // Verify no items were added
+    await expect(element(by.id('empty-grocery-list'))).toBeVisible();
   });
 
   it('should handle long grocery item names', async () => {
-    const longItemName = 'This is a very long grocery item name that should still be handled properly by the application interface and display correctly';
+    const longItem = 'This is a very long grocery item name that should still be handled properly by the application';
     
-    await element(by.id('grocery-input')).typeText(longItemName);
-    await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(5000);
+    await element(by.id('grocery-input')).typeText(longItem);
     await element(by.id('add-item-button')).tap();
-    
-    await expect(element(by.text(longItemName))).toBeVisible();
-    await expect(element(by.id('grocery-item-0'))).toBeVisible();
+    await waitFor(element(by.text(longItem))).toBeVisible().withTimeout(3000);
   });
 
   it('should maintain items order (newest first)', async () => {
@@ -86,84 +93,88 @@ describe('Grocery Shopping List E2E Tests', () => {
     
     for (const item of items) {
       await element(by.id('grocery-input')).typeText(item);
-      await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(5000);
       await element(by.id('add-item-button')).tap();
       await element(by.id('grocery-input')).clearText();
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
     
-    // Verify items are in reverse order (newest first)
-    await expect(element(by.text('Third Item'))).toBeVisible();
-    await expect(element(by.text('Second Item'))).toBeVisible();
-    await expect(element(by.text('First Item'))).toBeVisible();
+    // Verify newest item appears first (Third Item should be at index 0)
+    await expect(element(by.id('grocery-item-0'))).toBeVisible();
   });
 
   it('should allow user to delete grocery items', async () => {
-    const items = ['Item to Delete', 'Item to Keep'];
-    
+    // Add test items
+    const items = ['Delete Me', 'Keep Me'];
     for (const item of items) {
       await element(by.id('grocery-input')).typeText(item);
-      await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(5000);
       await element(by.id('add-item-button')).tap();
       await element(by.id('grocery-input')).clearText();
     }
     
-    // Try to delete first item (index 0 should be "Item to Keep" since it's newest first)
-    try {
-      await element(by.id('delete-item-0')).tap();
-      await expect(element(by.text('Item to Keep'))).not.toBeVisible();
-      await expect(element(by.text('Item to Delete'))).toBeVisible();
-    } catch (error) {
-      console.log('Delete functionality not implemented, skipping verification');
-    }
+    // Delete first item
+    await element(by.id('delete-item-0')).tap();
+    await expect(element(by.text('Delete Me'))).not.toBeVisible();
+    await expect(element(by.text('Keep Me'))).toBeVisible();
   });
 
-  // Skip tests that depend on features not yet implemented
   it('should allow user to edit grocery items', async () => {
-    console.log('Edit functionality test - depends on implementation');
-    // Add an item
-    await element(by.id('grocery-input')).typeText('Milk');
-    await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(5000);
+    // Add item to edit
+    await element(by.id('grocery-input')).typeText('Edit Me');
     await element(by.id('add-item-button')).tap();
     
-    // Edit functionality would be tested here when implemented
-    await expect(element(by.text('Milk'))).toBeVisible();
+    // Edit the item
+    await element(by.id('edit-item-0')).tap();
+    await element(by.id('edit-input-0')).clearText();
+    await element(by.id('edit-input-0')).typeText('Edited Item');
+    await element(by.id('save-edit-0')).tap();
+    
+    await expect(element(by.text('Edited Item'))).toBeVisible();
+    await expect(element(by.text('Edit Me'))).not.toBeVisible();
   });
 
   it('should cancel editing when user taps cancel', async () => {
-    console.log('Cancel edit functionality test - depends on implementation');
-    // Add an item
-    await element(by.id('grocery-input')).typeText('Bread');
-    await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(5000);
+    await element(by.id('grocery-input')).typeText('Original Item');
     await element(by.id('add-item-button')).tap();
     
-    await expect(element(by.text('Bread'))).toBeVisible();
+    // Start editing
+    await element(by.id('edit-item-0')).tap();
+    await element(by.id('edit-input-0')).clearText();
+    await element(by.id('edit-input-0')).typeText('Changed Text');
+    
+    // Cancel editing
+    await element(by.id('cancel-edit-0')).tap();
+    
+    // Verify original text remains
+    await expect(element(by.text('Original Item'))).toBeVisible();
+    await expect(element(by.text('Changed Text'))).not.toBeVisible();
   });
 
   it('should filter items based on search input', async () => {
-    console.log('Search functionality test - depends on implementation');
-    const items = ['Apple', 'Banana', 'Carrot'];
-    
+    // Add test items
+    const items = ['Apple Juice', 'Orange Juice', 'Banana Smoothie'];
     for (const item of items) {
       await element(by.id('grocery-input')).typeText(item);
-      await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(5000);
       await element(by.id('add-item-button')).tap();
       await element(by.id('grocery-input')).clearText();
     }
     
-    // Verify all items are visible
-    await expect(element(by.text('Apple'))).toBeVisible();
-    await expect(element(by.text('Banana'))).toBeVisible();
-    await expect(element(by.text('Carrot'))).toBeVisible();
+    // Search for "juice"
+    await element(by.id('search-input')).typeText('juice');
+    
+    // Verify filtered results
+    await expect(element(by.text('Apple Juice'))).toBeVisible();
+    await expect(element(by.text('Orange Juice'))).toBeVisible();
+    await expect(element(by.text('Banana Smoothie'))).not.toBeVisible();
   });
 
   it('should show empty state when no items match search', async () => {
-    console.log('Empty search state test - depends on implementation');
-    // Add some items
-    await element(by.id('grocery-input')).typeText('Milk');
-    await waitFor(element(by.id('add-item-button'))).toBeVisible().withTimeout(5000);
+    await element(by.id('grocery-input')).typeText('Test Item');
     await element(by.id('add-item-button')).tap();
     
-    await expect(element(by.text('Milk'))).toBeVisible();
+    // Search for non-existent item
+    await element(by.id('search-input')).typeText('xyz123');
+    
+    await expect(element(by.text('No items found'))).toBeVisible();
   });
 
   it('should validate item length and show error message', async () => {

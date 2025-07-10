@@ -159,10 +159,10 @@ export default function WeatherScreen() {
 
       <ThemedView style={styles.currentWeatherContainer} testID="weather-current-container">
         <ThemedView style={styles.temperatureSection}>
-          <ThemedText style={styles.temperature} testID="weather-temperature">
+          <ThemedText style={styles.temperature} testID="weather-current-temp">
             {weatherData.temperature}°C
           </ThemedText>
-          <ThemedText style={styles.condition} testID="weather-condition">
+          <ThemedText style={styles.condition} testID="weather-current-condition">
             {weatherData.condition}
           </ThemedText>
           <ThemedText style={styles.feelsLike} testID="weather-feels-like">
@@ -180,19 +180,25 @@ export default function WeatherScreen() {
       <ThemedView style={styles.detailsContainer} testID="weather-details-container">
         <ThemedText type="subtitle">Weather Details</ThemedText>
         <ThemedView style={styles.detailsGrid}>
-          <ThemedView style={styles.detailItem} testID="weather-detail-humidity">
+          <ThemedView style={styles.detailItem} testID="weather-humidity">
             <IconSymbol size={24} name="humidity.fill" color="#2196F3" />
             <ThemedText style={styles.detailLabel}>Humidity</ThemedText>
             <ThemedText style={styles.detailValue}>{weatherData.humidity}%</ThemedText>
           </ThemedView>
           
-          <ThemedView style={styles.detailItem} testID="weather-detail-wind">
+          <ThemedView style={styles.detailItem} testID="weather-wind-speed">
             <IconSymbol size={24} name="wind" color="#2196F3" />
             <ThemedText style={styles.detailLabel}>Wind Speed</ThemedText>
             <ThemedText style={styles.detailValue}>{weatherData.windSpeed} km/h</ThemedText>
           </ThemedView>
 
-          <ThemedView style={styles.detailItem} testID="weather-detail-uv">
+          <ThemedView style={styles.detailItem} testID="weather-pressure">
+            <IconSymbol size={24} name="barometer" color="#2196F3" />
+            <ThemedText style={styles.detailLabel}>Pressure</ThemedText>
+            <ThemedText style={styles.detailValue}>{weatherData.pressure} hPa</ThemedText>
+          </ThemedView>
+
+          <ThemedView style={styles.detailItem} testID="weather-uv-index">
             <IconSymbol size={24} name="sun.max.fill" color={getUVIndexColor(weatherData.uvIndex)} />
             <ThemedText style={styles.detailLabel}>UV Index</ThemedText>
             <ThemedText style={[styles.detailValue, { color: getUVIndexColor(weatherData.uvIndex) }]}>
@@ -204,12 +210,6 @@ export default function WeatherScreen() {
             <IconSymbol size={24} name="eye.fill" color="#2196F3" />
             <ThemedText style={styles.detailLabel}>Visibility</ThemedText>
             <ThemedText style={styles.detailValue}>{weatherData.visibility} km</ThemedText>
-          </ThemedView>
-
-          <ThemedView style={styles.detailItem} testID="weather-detail-pressure">
-            <IconSymbol size={24} name="barometer" color="#2196F3" />
-            <ThemedText style={styles.detailLabel}>Pressure</ThemedText>
-            <ThemedText style={styles.detailValue}>{weatherData.pressure} hPa</ThemedText>
           </ThemedView>
         </ThemedView>
       </ThemedView>
