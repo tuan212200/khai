@@ -22,15 +22,52 @@ export default function TabLayout() {
           ios: {
             // Use a transparent background on iOS to show the blur effect
             position: 'absolute',
+            height: 88, // Ensure sufficient height for touch targets
+            paddingBottom: 34, // Safe area padding
           },
-          default: {},
+          default: {
+            height: 64, // Standard height for Android
+          },
         }),
+        tabBarItemStyle: {
+          paddingVertical: 4,
+          minHeight: 48, // Ensure minimum touch target
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarAccessibilityLabel: 'Home Tab',
+          tabBarButton: (props) => <HapticTab {...props} testID="tab-home" />,
+        }}
+      />
+      <Tabs.Screen
+        name="tasks"
+        options={{
+          title: 'Tasks',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="checkmark.circle.fill" color={color} />,
+          tabBarAccessibilityLabel: 'Tasks Tab',
+          tabBarButton: (props) => <HapticTab {...props} testID="tab-tasks" />,
+        }}
+      />
+      <Tabs.Screen
+        name="weather"
+        options={{
+          title: 'Weather',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="cloud.sun.fill" color={color} />,
+          tabBarAccessibilityLabel: 'Weather Tab',
+          tabBarButton: (props) => <HapticTab {...props} testID="tab-weather" />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          tabBarAccessibilityLabel: 'Profile Tab',
+          tabBarButton: (props) => <HapticTab {...props} testID="tab-profile" />,
         }}
       />
       <Tabs.Screen
@@ -38,6 +75,8 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          tabBarAccessibilityLabel: 'Explore Tab',
+          tabBarButton: (props) => <HapticTab {...props} testID="tab-explore" />,
         }}
       />
     </Tabs>
